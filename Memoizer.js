@@ -1,4 +1,5 @@
 const moment = require('moment');
+const co = require('co');
 function getMemoizer(){
   if(this.__memoizer__ === undefined || this.__memoizer__ === null){
     this.__memoizer__ = new Memoizer();
@@ -77,21 +78,24 @@ class Memoizer {
     return now > expireTime;
   }
 
-  async expireMemoizeAsync(identifier, callback, expiry = 3000, ...args){
-    const o = {};
-    o[identifier] = callback;
-    if(this.memo[identifier] === undefined){
-      this.expiry[identifier] = moment().add(expiry);
-      const promise = o[identifier](...args);
-      this.memo[identifier] = promise;
-      promise.catch(() => { this.memo[identifier] = undefined });
-    } else if(this.expired(identifier)){
-      this.expiry[identifier] = moment().add(expiry);
-      const promise = o[identifier](...args);
-      this.memo[identifier] = promise;
-      promise.catch(() => { this.memo[identifier] = undefined });
+  expireMemoizeAsync(identifier, callback, expiry = 3000, ...args){
+    function *generator(){
+      const o = {};
+      o[identifier] = callback;
+      if(this.memo[identifier] === undefined){
+        this.expiry[identifier] = moment().add(expiry);
+        const promise = o[identifier](...args);
+        this.memo[identifier] = promise;
+        promise.catch(() => { this.memo[identifier] = undefined });
+      } else if(this.expired(identifier)){
+        this.expiry[identifier] = moment().add(expiry);
+        const promise = o[identifier](...args);
+        this.memo[identifier] = promise;
+        promise.catch(() => { this.memo[identifier] = undefined });
+      };
+      return this.memo[identifier];
     };
-    return this.memo[identifier];
+    return co(generator.bind(this));
   }
 
   expireMemoize(identifier, callback, expiry = 3000, ...args){
@@ -116,13 +120,16 @@ class Memoizer {
     return this.memo[identifier];
   }
 
-  async asyncMemoize(identifier, callback, ...args){
-    const o = {};
-    o[identifier] = callback;
-    if(this.memo[identifier] === undefined){
-      this.memo[identifier] = await o[identifier](...args);
-    }
-    return this.memo[identifier];
+  asyncMemoize(identifier, callback, ...args){
+    function *generator(){
+      const o = {};
+      o[identifier] = callback;
+      if(this.memo[identifier] === undefined){
+        this.memo[identifier] = yield o[identifier](...args);
+      }
+      return this.memo[identifier];
+    };
+    return co(generator.bind(this));
   }
 
   forceMemoize(dataToMemoize = {}){
@@ -159,18 +166,5 @@ class Memoizer {
 
 }
 
-
-if(__filename === process.argv[1]){
-  const callback = async (time = 3000) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => { reject(Math.random()) }, time)
-    });
-  };
-
-  const m = new Memoizer();
-  for(var i = 0; i < 30; i++){
-    m.expireMemoizeAsync('test', callback, 3000).then(console.log);
-  }
-}
 
 module.exports = Memoizer;
