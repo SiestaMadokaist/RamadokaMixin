@@ -46,9 +46,19 @@ class ErrorLoggerBase {
     throw new Error('Not Implemented Error');
   }
 
+  requestJson(){
+    return {
+      path: '',
+      host: '',
+      params: '',
+      headers: '',
+    };
+  }
+
   s3Record(){
     return {
       namespace: this.namespace(),
+      request: this.requestJson(),
       error: this.errorJson(),
       recordTime: this.recordTime(),
       recordTimeTs: this.recordTime().getTime(),
