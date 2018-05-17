@@ -3,7 +3,7 @@ const Memoizer = require('./Memoizer');
 const moment = require('moment');
 class ErrorLoggerBase {
   static handlePromise(promise){
-    return promise.catch(error => this.create(error).doLogError());
+    return promise.catch(error => this.create({ error }).doLogError());
   }
 
   static create(props = {}){
