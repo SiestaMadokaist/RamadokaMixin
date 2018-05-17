@@ -56,6 +56,12 @@ class ErrorLoggerBase {
       host: '',
       params: '',
       headers: '',
+      ip: '',
+      host: '',
+      origin: '',
+      referer: '',
+      params: '',
+      headers: '',
     };
   }
 
