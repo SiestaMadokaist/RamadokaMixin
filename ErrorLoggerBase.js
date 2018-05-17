@@ -2,7 +2,7 @@ const utility = require('./utility');
 const Memoizer = require('./Memoizer');
 const moment = require('moment');
 class ErrorLoggerBase {
-  create(props = {}){
+  static create(props = {}){
     if(props instanceof Error){
       throw new Error(`ErrorLogger should be instatiated with: #create({ error }) instead of #create(error)`);
     }
